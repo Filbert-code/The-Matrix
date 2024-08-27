@@ -10,7 +10,7 @@ class Neo:
 
     def __init__(self, level):
         self.level = level
-        self.rect = Rect(SCREEN_WIDTH // 2, level.get_current_floor_y(), 10, 100)
+        self.rect = Rect(SCREEN_WIDTH // 2, level.get_current_floor_y(), 10, 125)
         self.x = self.rect.x
         self.y = self.rect.y
         self.dx = 0

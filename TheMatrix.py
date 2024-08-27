@@ -1,6 +1,6 @@
 import pygame as pg
 
-from cameras.PlayerFixedCamera import PlayerFixedCamera
+from cameras.PlayerFollowCamera import PlayerFollowCamera
 from constants import SCREEN_WIDTH, SCREEN_HEIGHT
 from entities.Neo import Neo
 from enums.GameState import GameState
@@ -15,9 +15,12 @@ class TheMatrix:
         pg.init()
         self.screen = pg.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         self.world = pg.Surface((SCREEN_WIDTH * 2, SCREEN_HEIGHT * 2))
-        self.camera = PlayerFixedCamera(
+        self.level = LevelOne()
+        self.neo = Neo(self.level)
+        self.camera = PlayerFollowCamera(
             self.screen,
             self.world,
+            self.neo,
             starting_scale=1.1,
             min_max_scale=(0.5, 6)
         )
@@ -26,9 +29,6 @@ class TheMatrix:
         # delta time in seconds since last frame, used for frame rate-independent physics
         self.dt = 0
         self.running = True
-
-        self.level = LevelOne()
-        self.neo = Neo(self.level)
 
     def start_game_loop(self):
         while self.running:
@@ -52,13 +52,9 @@ class TheMatrix:
             if event.type == pg.KEYDOWN:
                 keys = pg.key.get_pressed()
                 if keys[pg.K_w]:  # goes up a floor
-                    print('UP pressed!')
                     floor_stairways_rects = self.level.get_current_floor_stairways_rects()
-                    print(floor_stairways_rects)
-                    print(self.neo.rect)
                     for stairway in floor_stairways_rects:
                         if self.neo.rect.colliderect(stairway):
-                            print('YES')
                             self.level.floor_up()
                             break
                 if keys[pg.K_s]:  # goes down a floor
@@ -67,10 +63,14 @@ class TheMatrix:
                         if self.neo.rect.colliderect(stairway):
                             self.level.floor_down()
                             break
+                if keys[pg.K_e]:
+                    self.camera.trigger_zoom_in_transition()
+                if keys[pg.K_q]:
+                    self.camera.trigger_zoom_in_transition(False)
 
     def update(self):
         self.neo.update(self.dt)
-        self.camera.update((self.neo.x, self.neo.y))
+        self.camera.update(self.neo, self.dt)
 
     def draw(self):
         self.world.set_clip(self.camera.get_camera_rect())
@@ -80,7 +80,7 @@ class TheMatrix:
         self.level.draw(self.world)
         self.neo.draw(self.world)
 
-        self.camera.draw()
+        self.camera.draw(self.world)
         self.world.set_clip(None)
 
         # draw the buffer to the screen
