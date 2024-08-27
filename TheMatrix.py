@@ -7,18 +7,19 @@ from enums.GameState import GameState
 from pygame import Rect
 
 from levels.LevelOne import LevelOne
+from util.common import to_pygame_rect
 
 
 class TheMatrix:
     def __init__(self):
         pg.init()
         self.screen = pg.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-        self.world = pg.Surface((SCREEN_WIDTH, SCREEN_HEIGHT * 2))
+        self.world = pg.Surface((SCREEN_WIDTH * 2, SCREEN_HEIGHT * 2))
         self.camera = PlayerFixedCamera(
             self.screen,
             self.world,
             starting_scale=1.1,
-            min_max_scale=(1, 6)
+            min_max_scale=(0.5, 6)
         )
         self.clock = pg.time.Clock()
         self.state = GameState.MAIN_MENU
@@ -26,8 +27,8 @@ class TheMatrix:
         self.dt = 0
         self.running = True
 
-        self.neo = Neo(Rect(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2, 10, 100))
         self.level = LevelOne()
+        self.neo = Neo(self.level)
 
     def start_game_loop(self):
         while self.running:
@@ -41,11 +42,31 @@ class TheMatrix:
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 self.running = False
+            # mouse wheel events
             if event.type == pg.MOUSEWHEEL:
                 if event.y == 1:
                     self.camera.zoom_out()
                 elif event.y == -1:
                     self.camera.zoom_in()
+            # keyboard events
+            if event.type == pg.KEYDOWN:
+                keys = pg.key.get_pressed()
+                if keys[pg.K_w]:  # goes up a floor
+                    print('UP pressed!')
+                    floor_stairways_rects = self.level.get_current_floor_stairways_rects()
+                    print(floor_stairways_rects)
+                    print(self.neo.rect)
+                    for stairway in floor_stairways_rects:
+                        if self.neo.rect.colliderect(stairway):
+                            print('YES')
+                            self.level.floor_up()
+                            break
+                if keys[pg.K_s]:  # goes down a floor
+                    floor_stairways_rects = self.level.get_current_floor_stairways_rects()
+                    for stairway in floor_stairways_rects:
+                        if self.neo.rect.colliderect(stairway):
+                            self.level.floor_down()
+                            break
 
     def update(self):
         self.neo.update(self.dt)

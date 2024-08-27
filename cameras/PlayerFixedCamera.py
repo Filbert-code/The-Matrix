@@ -1,6 +1,6 @@
 import pygame as pg
 
-from constants import SCREEN_HEIGHT
+from constants import SCREEN_HEIGHT, SCREEN_WIDTH
 
 
 class PlayerFixedCamera:
@@ -20,7 +20,7 @@ class PlayerFixedCamera:
 
     def update(self, player_pos):
         # update window width/height based on the scale
-        self.window_width = self._world_width / self.scale
+        self.window_width = SCREEN_WIDTH / self.scale
         self.window_height = SCREEN_HEIGHT / self.scale
         if self.window_width > self._world_width:
             self.window_width = self._world_width
@@ -30,7 +30,8 @@ class PlayerFixedCamera:
         # update window position(left,top) to center on the player
         player_x, player_y = player_pos
         self.left = player_x - self.window_width / 2
-        self.top = player_y - self.window_height / 2
+        # TODO: abstract out the 2080 to a variable
+        self.top = 1080 - (player_y - self.window_height / 2)
         if self.left < 0:
             self.left = 0
         elif self.left > self._world_width - self.window_width:
@@ -43,7 +44,7 @@ class PlayerFixedCamera:
     def draw(self):
         subsurface = self._world.subsurface(self.left, self.top, self.window_width, self.window_height)
         self._screen.blit(
-            pg.transform.scale(subsurface, (self._world_width, SCREEN_HEIGHT)),
+            pg.transform.scale(subsurface, (SCREEN_WIDTH, SCREEN_HEIGHT)),
             (0, 0)
         )
 
