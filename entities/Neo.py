@@ -1,7 +1,8 @@
 import pygame as pg
 from pygame import Rect
 
-from constants import SCREEN_WIDTH
+import colors
+from constants import SCREEN_WIDTH, WORLD_HEIGHT
 from util.common import to_pygame_rect
 
 
@@ -21,7 +22,7 @@ class Neo:
 
     def draw(self, screen):
         # draw Neo as a rectangle with the given rect
-        pg.draw.rect(screen, (0, 0, 0), to_pygame_rect(self.rect, self.level.HEIGHT))
+        pg.draw.rect(screen, colors.player, to_pygame_rect(self.rect, WORLD_HEIGHT))
 
     def move(self, dt):
         self.dx = 0

@@ -1,0 +1,8 @@
+grid = "#3c3440"
+player = "#C8ACD6"
+stairways = "#2f2b61"
+background = "#17153B"
+building = "#433D8B"
+ui_background = "#100f29"
+ui_font_color = "#f4eef7"
+agent="#df597f"

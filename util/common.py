@@ -9,3 +9,6 @@ def to_pygame_coords(coords, height):
 def to_pygame_rect(rect, height):
     """Convert a rectangle from normal coordinates to pygame coordinates."""
     return Rect(rect.x, height - rect.y - rect.height, rect.width, rect.height)
+
+# def from_screen_to_world_coords(coord):
+#

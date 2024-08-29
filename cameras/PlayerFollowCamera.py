@@ -19,9 +19,9 @@ class PlayerFollowCamera:
         self.window_width = SCREEN_WIDTH / self.scale
         self.window_height = SCREEN_HEIGHT / self.scale
         self.left = player.rect.x - self.window_width / 2
-        self.top = WORLD_HEIGHT - player.rect.y - self.window_height / 2
+        self.top = self.window_height - player.rect.y - self.window_height / 2
 
-        self.camera_speed_x = 1500
+        self.camera_speed_x = 750
         self.camera_speed_y = 500
 
         self.transition_start_time = time.time()
@@ -43,11 +43,12 @@ class PlayerFollowCamera:
             self.window_height = self._world_height
 
         # update window position(left,top) to center on the player
-        player_x, player_y = (neo.rect.x, neo.rect.y)
+        player_x, player_y = (neo.rect.centerx, neo.rect.centery)
         # self.left = player_x - self.window_width / 2
         # self.top = WORLD_HEIGHT - player_y - self.window_height / 2
-        if abs(self.left - (neo.rect.left - self.window_width / 2)) < 20:
+        if abs(self.left - (neo.rect.left - self.window_width / 2)) < 5:
             self.left = neo.rect.left - self.window_width / 2
+            pass
         else:
             if self.left < neo.rect.left - self.window_width / 2:
                 self.left += dt * self.camera_speed_x
@@ -71,7 +72,7 @@ class PlayerFollowCamera:
         elif self.top > self._world_height - self.window_height:
             self.top = self._world_height - self.window_height
 
-    def draw(self, screen):
+    def draw(self):
         subsurface = self._world.subsurface(self.left, self.top, self.window_width, self.window_height)
         self._screen.blit(
             pg.transform.scale(subsurface, (SCREEN_WIDTH, SCREEN_HEIGHT)),
@@ -98,5 +99,5 @@ class PlayerFollowCamera:
 
     def convert_camera_to_world_coord(self, camera_coord):
         scaled_pos = (camera_coord[0] / self.scale, camera_coord[1] / self.scale)
-        mouse_pos_pymunk_coord = (scaled_pos[0] + self.left, scaled_pos[1] + self.top)
+        mouse_pos_pymunk_coord = (scaled_pos[0] + self.left, scaled_pos[1] + (self.top * self.scale))
         return mouse_pos_pymunk_coord

@@ -1,6 +1,7 @@
 import pygame as pg
 from pygame import Rect
 
+import colors
 from constants import SCREEN_WIDTH, SCREEN_HEIGHT
 from util.common import to_pygame_rect
 
@@ -8,8 +9,8 @@ from util.common import to_pygame_rect
 class LevelOne:
     FLOOR_HEIGHT = 175
     STAIRWAY_WIDTH = 100
-    STARTING_FLOOR = 1
-    NUMBER_OF_FLOORS = 10
+    STARTING_FLOOR = 6
+    NUMBER_OF_FLOORS = 8
     WIDTH = SCREEN_WIDTH * 2
     HEIGHT = SCREEN_HEIGHT * 2
 
@@ -46,9 +47,12 @@ class LevelOne:
     def get_current_floor_y(self):
         return self.floors_rects[self.current_player_floor - 1].y
 
+    def get_y_for_floor(self, floor_num):
+        return self.floors_rects[floor_num - 1].y
+
     def draw(self, screen):
         for floor_rect in self.floors_rects:
-            pg.draw.rect(screen, (255, 255, 255), to_pygame_rect(floor_rect, self.HEIGHT))
+            pg.draw.rect(screen, colors.building, to_pygame_rect(floor_rect, self.HEIGHT))
         for stairways in self.stairways_rects:
             for stairway in stairways:
-                pg.draw.rect(screen, (111, 111, 111), to_pygame_rect(stairway, self.HEIGHT))
+                pg.draw.rect(screen, colors.stairways, to_pygame_rect(stairway, self.HEIGHT))
