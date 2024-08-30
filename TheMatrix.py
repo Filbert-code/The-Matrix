@@ -43,7 +43,12 @@ class TheMatrix:
         self.points_to_draw = []
 
         self.agents_group = ExtendedGroup()
-        self.agents_group.add(Agent(self.level, (WORLD_WIDTH / 2, self.level.get_y_for_floor(1))))
+        self.agents_group.add(
+            Agent(self.level, 1)
+        )
+        # self.agents_group.add(
+        #     Agent(self.level, 1)
+        # )
         # self.agent_smith =
 
     def start_game_loop(self):
@@ -108,6 +113,7 @@ class TheMatrix:
         self.neo.update(self.dt)
         self.bullet_group.update(self.dt)
         self.agents_group.update(self.dt)
+        self.level.update(self.agents_group)
 
         self.camera.update(self.neo, self.dt)
 
@@ -120,6 +126,8 @@ class TheMatrix:
         self.neo.draw(self.world)
         self.bullet_group.draw(self.world)
         self.agents_group.draw(self.world)
+        for agent in self.agents_group:
+            pg.draw.line(self.world, colors.ui_font_color, to_pygame_rect(agent.rect, WORLD_HEIGHT).center, (agent.vision_vector.x, WORLD_HEIGHT - agent.vision_vector.y), 2)
 
         # draw a 10 x 10 grid
         grid_row_num = 10

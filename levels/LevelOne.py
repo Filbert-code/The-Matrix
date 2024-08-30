@@ -2,7 +2,8 @@ import pygame as pg
 from pygame import Rect
 
 import colors
-from constants import SCREEN_WIDTH, SCREEN_HEIGHT
+from constants import SCREEN_WIDTH, SCREEN_HEIGHT, WORLD_HEIGHT
+from data_structures.UnexploredFloorAreasSortedList import UnexploredFloorAreasSortedList
 from util.common import to_pygame_rect
 
 
@@ -30,7 +31,14 @@ class LevelOne:
                 floor_stairways_rects.append(Rect(x, i + 20, self.STAIRWAY_WIDTH, self.FLOOR_HEIGHT))
             self.stairways_rects.append(floor_stairways_rects)
 
-    def update(self):
+        # this data structure gets updated from the Agent update function
+        self.unexplored_floors = [UnexploredFloorAreasSortedList(self.WIDTH) for _ in range(self.NUMBER_OF_FLOORS)]
+
+    def update(self, agents):
+        # TODO: update this appropriately
+        # for agent in agents:
+        #     # TODO: Update this to cumulatively sum up the floor explored area
+        #     self.unexplored_floors[agent.current_floor - 1] = agent.current_floor_explored_start_end_x
         pass
 
     def get_current_floor_stairways_rects(self):
@@ -56,3 +64,15 @@ class LevelOne:
         for stairways in self.stairways_rects:
             for stairway in stairways:
                 pg.draw.rect(screen, colors.stairways, to_pygame_rect(stairway, self.HEIGHT))
+
+        # draw area explored by agents
+        for floor_index, unexplored_floor_area_sorted_list in enumerate(self.unexplored_floors):
+            if floor_index == 0:
+                for unexplored_floor_area in unexplored_floor_area_sorted_list.sorted_list:
+                    x1, x2 = unexplored_floor_area.x1, unexplored_floor_area.x2
+                    pg.draw.rect(
+                        screen,
+                        colors.grid,
+                        to_pygame_rect(Rect(x1, self.floors_rects[floor_index].y, abs(x2 - x1), self.FLOOR_HEIGHT),
+                                       WORLD_HEIGHT)
+                    )
