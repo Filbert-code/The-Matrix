@@ -43,12 +43,11 @@ class TheMatrix:
         self.points_to_draw = []
 
         self.agents_group = ExtendedGroup()
-        self.agents_group.add(
-            Agent(self.level, 1)
-        )
-        # self.agents_group.add(
-        #     Agent(self.level, 1)
-        # )
+        for i in range(5):
+            self.agents_group.add(
+                Agent(self.level, 1, looking_right=True if i % 2 == 0 else False)
+            )
+
         # self.agent_smith =
 
     def start_game_loop(self):

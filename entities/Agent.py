@@ -11,60 +11,28 @@ from util.common import to_pygame_rect
 
 
 class Agent(pg.sprite.Sprite):
-    SPEED = 300
+    SPEED = 400
+    VIEW_DISTANCE = 300
 
-    def __init__(self, level, starting_floor):
+    def __init__(self, level, starting_floor, looking_right=True):
         pg.sprite.Sprite.__init__(self)
         self.level: LevelOne = level
         self.starting_floor = starting_floor
         self.current_floor = starting_floor
-        self.rect = Rect(WORLD_WIDTH / 2, self.level.get_y_for_floor(starting_floor), 10, 125)
+        self.rect = Rect(WORLD_WIDTH / 2 + random.randint(-1500, 1500), self.level.get_y_for_floor(starting_floor), 10, 125)
         self.image = pg.Surface((10, 125))
         self.image.fill(colors.agent)
         self.x = self.rect.x
         self.y = self.rect.y
-        self.dx = self.SPEED
+        self.dx = self.SPEED if looking_right else -self.SPEED
         self.dy = 0
 
-        self.vision_vector = Vector2(self.rect.centerx + 500, self.rect.centery)
+        self.vision_vector = Vector2(self.rect.centerx + (self.VIEW_DISTANCE if looking_right else -self.VIEW_DISTANCE), self.rect.centery)
         self.current_floor_explored_start_end_x = Vector2(self.rect.centerx, self.rect.centerx)
 
     def update(self, dt):
         current_floor_unexplored_areas: UnexploredFloorAreasSortedList = self.level.unexplored_floors[
             self.current_floor - 1]
-
-        # ================================================
-        # LOGIC FOR UPDATING THE LEVEL'S SORTED UNEXPLORED AREA DATA STRUCTURE FOR THE CURRENT FLOOR
-        # TODO: Check if vision vector overlaps with any unexplored floor areas
-        # If it does, update the overlapped area to reduce its range
-        for unexplored_area in current_floor_unexplored_areas.sorted_list:
-            agent_x1, agent_x2 = min(self.rect.centerx, int(self.vision_vector[0])), max(self.rect.centerx, int(self.vision_vector[0]))
-
-            # if agent does not overlap with unexplored area, skip
-            if not (unexplored_area.x1 <= agent_x1 <= unexplored_area.x2 or
-                    unexplored_area.x1 <= agent_x2 <= unexplored_area.x2):
-                # print(f'Agent x1: {agent_x1}, Agent x2: {agent_x2}')
-                continue
-
-            if agent_x1 >= unexplored_area.x1 and agent_x2 <= unexplored_area.x2:
-                # the agent has unexplored area forwards and backwards. Need to split the unexplored area into 2
-                new_unexplored_area = UnexploredFloorArea(agent_x2, unexplored_area.x2)
-                current_floor_unexplored_areas.sorted_list.add(new_unexplored_area)
-                unexplored_area.x2 = agent_x1
-                # break here because we know our vision is completely within this unexplored area and none others
-                break
-
-            if agent_x1 <= unexplored_area.x1 <= agent_x2 and agent_x1 <= unexplored_area.x2 <= agent_x2:
-                # area is within the vision area
-                current_floor_unexplored_areas.sorted_list.remove(unexplored_area)
-            elif agent_x1 > unexplored_area.x1 and agent_x2 > unexplored_area.x2:
-                unexplored_area.x2 = agent_x1
-                if abs(unexplored_area.x2 - unexplored_area.x1) < 5:
-                    current_floor_unexplored_areas.sorted_list.remove(unexplored_area)
-            elif agent_x1 < unexplored_area.x1 and agent_x2 < unexplored_area.x2:
-                unexplored_area.x1 = agent_x2
-                if abs(unexplored_area.x2 - unexplored_area.x1) < 5:
-                    current_floor_unexplored_areas.sorted_list.remove(unexplored_area)
 
         # ================================================
         # LOGIC FOR MOVING PLAYER IN THE CORRECT DIRECTION
@@ -81,12 +49,55 @@ class Agent(pg.sprite.Sprite):
             elif self.rect.centerx > closest_area.x1:
                 # move left
                 self.dx = -self.SPEED
-                self.vision_vector = Vector2(self.rect.centerx - 500, self.rect.centery)
+                self.vision_vector = Vector2(self.rect.centerx - self.VIEW_DISTANCE, self.rect.centery)
             elif self.rect.centerx < closest_area.x1:
                 # move right
                 self.dx = self.SPEED
-                self.vision_vector = Vector2(self.rect.centerx + 500, self.rect.centery)
+                self.vision_vector = Vector2(self.rect.centerx + self.VIEW_DISTANCE, self.rect.centery)
         # ================================================
+
+        # ================================================
+        # LOGIC FOR UPDATING THE LEVEL'S SORTED UNEXPLORED AREA DATA STRUCTURE FOR THE CURRENT FLOOR
+        # TODO: Check if vision vector overlaps with any unexplored floor areas
+        # If it does, update the overlapped area to reduce its range
+        for unexplored_area in current_floor_unexplored_areas.sorted_list:
+            agent_x1, agent_x2 = min(self.rect.centerx, int(self.vision_vector[0])), max(self.rect.centerx, int(self.vision_vector[0]))
+
+            if agent_x1 <= unexplored_area.x1 <= agent_x2 and agent_x1 <= unexplored_area.x2 <= agent_x2:
+                # area is within the vision area
+                current_floor_unexplored_areas.sorted_list.remove(unexplored_area)
+
+            # if agent does not overlap with unexplored area, skip
+            if not (unexplored_area.x1 <= agent_x1 <= unexplored_area.x2 or
+                    unexplored_area.x1 <= agent_x2 <= unexplored_area.x2):
+                # print(f'Agent x1: {agent_x1}, Agent x2: {agent_x2}')
+                continue
+
+            if agent_x1 >= unexplored_area.x1 and agent_x2 <= unexplored_area.x2:
+                # the agent has unexplored area forwards and backwards. Need to split the unexplored area into 2
+                new_unexplored_area = UnexploredFloorArea(agent_x2, unexplored_area.x2)
+                current_floor_unexplored_areas.sorted_list.add(new_unexplored_area)
+                unexplored_area.x2 = agent_x1
+                # break here because we know our vision is completely within this unexplored area and none others
+                break
+
+
+            if agent_x1 >= unexplored_area.x1 and agent_x2 >= unexplored_area.x2:
+                unexplored_area.x2 = agent_x1
+                if abs(unexplored_area.x2 - unexplored_area.x1) < 5:
+                    try:
+                        current_floor_unexplored_areas.sorted_list.remove(unexplored_area)
+                    except ValueError as e:
+                        print(e)
+            elif agent_x1 <= unexplored_area.x1 and agent_x2 <= unexplored_area.x2:
+                unexplored_area.x1 = agent_x2
+                if abs(unexplored_area.x2 - unexplored_area.x1) < 5:
+                    try:
+                        current_floor_unexplored_areas.sorted_list.remove(unexplored_area)
+                    except ValueError as e:
+                        print(e)
+
+
 
         # ================================================
         # print(current_floor_unexplored_areas.sorted_list)
