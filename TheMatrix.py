@@ -43,7 +43,7 @@ class TheMatrix:
         self.points_to_draw = []
 
         self.agents_group = ExtendedGroup()
-        for i in range(5):
+        for i in range(1):
             self.agents_group.add(
                 Agent(self.level, 1, looking_right=True if i % 2 == 0 else False)
             )
