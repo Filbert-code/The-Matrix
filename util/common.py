@@ -10,5 +10,6 @@ def to_pygame_rect(rect, height):
     """Convert a rectangle from normal coordinates to pygame coordinates."""
     return Rect(rect.x, height - rect.y - rect.height, rect.width, rect.height)
 
-# def from_screen_to_world_coords(coord):
-#
+
+def is_segments_overlapping(seg_one, seg_two):
+    return seg_one[0] <= seg_two[0] <= seg_one[1] or seg_one[0] <= seg_two[1] <= seg_one[1]

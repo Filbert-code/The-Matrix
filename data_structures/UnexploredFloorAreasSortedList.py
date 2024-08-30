@@ -33,13 +33,13 @@ class UnexploredFloorArea:
 # Insertions are O(n) (unfortunately)
 # Finding is O(log(n))
 class UnexploredFloorAreasSortedList:
-    def __init__(self, floor_size, unexplored_floor_areas: List[UnexploredFloorArea] = None):
+    def __init__(self, floor_size, unexplored_floor_areas: List[UnexploredFloorArea] = None, building_horizontal_padding=0):
         self.floor_size = floor_size
         self.sorted_list = SortedList()
         if unexplored_floor_areas:
             self.add_unexplored_floor_areas(unexplored_floor_areas)
         else:
-            self.sorted_list.add(UnexploredFloorArea(0, self.floor_size))
+            self.sorted_list.add(UnexploredFloorArea(building_horizontal_padding, self.floor_size - building_horizontal_padding))
 
     def add_unexplored_floor_areas(self, unexplored_floor_areas):
         for unexplored_floor_area in unexplored_floor_areas:

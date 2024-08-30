@@ -43,7 +43,7 @@ class TheMatrix:
         self.points_to_draw = []
 
         self.agents_group = ExtendedGroup()
-        for i in range(1):
+        for i in range(4):
             self.agents_group.add(
                 Agent(self.level, 1, looking_right=True if i % 2 == 0 else False)
             )
@@ -126,7 +126,7 @@ class TheMatrix:
         self.bullet_group.draw(self.world)
         self.agents_group.draw(self.world)
         for agent in self.agents_group:
-            pg.draw.line(self.world, colors.ui_font_color, to_pygame_rect(agent.rect, WORLD_HEIGHT).center, (agent.vision_vector.x, WORLD_HEIGHT - agent.vision_vector.y), 2)
+            pg.draw.line(self.world, colors.agent_searching, to_pygame_rect(agent.rect, WORLD_HEIGHT).center, (agent.vision_vector.x, WORLD_HEIGHT - agent.vision_vector.y), 2)
 
         # draw a 10 x 10 grid
         grid_row_num = 10
@@ -137,9 +137,6 @@ class TheMatrix:
             pg.draw.line(self.world, colors.grid, (0, y), (WORLD_WIDTH, y), 1)
             for x in range(0, WORLD_WIDTH, col_width):
                 pg.draw.line(self.world, colors.grid, (x, 0), (x, WORLD_HEIGHT), 1)
-
-        for point in self.points_to_draw:
-            pg.draw.circle(self.world, )
 
         self.camera.draw()
         self.hud.draw(self.screen)
