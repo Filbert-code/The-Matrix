@@ -56,6 +56,7 @@ class TheMatrix:
             self.update()
             self.draw()
             self.dt = self.clock.tick(60) / 1000
+            # print(self.clock.get_fps())
         pg.quit()
 
     def handle_events(self):

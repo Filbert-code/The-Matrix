@@ -3,10 +3,6 @@ from typing import List
 from sortedcontainers import SortedList
 
 
-def get_factored_unexplored_areas_list_from_explored_areas(explored_areas):
-    pass
-
-
 class UnexploredFloorArea:
     def __init__(self, x1, x2):
         self.x1 = x1

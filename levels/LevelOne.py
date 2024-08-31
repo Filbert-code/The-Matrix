@@ -4,12 +4,10 @@ from pygame import Rect
 import colors
 from constants import SCREEN_WIDTH, SCREEN_HEIGHT, WORLD_HEIGHT, WORLD_WIDTH, FONTS_DIRECTORY
 from data_structures.UnexploredFloorAreasSortedList import UnexploredFloorAreasSortedList
+from data_structures.UnexploredRoomAreasSortedList import UnexploredRoomAreasSortedList
 from levels.Room import Room
 from util.common import to_pygame_rect, to_pygame_coords
 import pygame.freetype
-
-
-
 
 
 class LevelOne:
@@ -51,7 +49,11 @@ class LevelOne:
             self.floors_rooms.append(floor_rooms)
 
         # this data structure gets updated from the Agent update function
-        self.unexplored_floors = [UnexploredFloorAreasSortedList(self.WIDTH, None, self.BUILDING_HORIZONTAL_PADDING) for _ in range(self.NUMBER_OF_FLOORS)]
+        self.unexplored_floors_areas = [UnexploredFloorAreasSortedList(self.WIDTH, None, self.BUILDING_HORIZONTAL_PADDING) for _ in range(self.NUMBER_OF_FLOORS)]
+        self.unexplored_rooms_areas = []
+        for floor_rooms_list in self.floors_rooms:
+            unexplored_rooms_for_floor = [UnexploredRoomAreasSortedList(room.room_rect.width, None) for room in floor_rooms_list]
+            self.unexplored_rooms_areas.append(unexplored_rooms_for_floor)
 
     def update(self, agents):
         # TODO: update this appropriately
@@ -84,7 +86,7 @@ class LevelOne:
         for floor_rect in self.floors_rects:
             pg.draw.rect(screen, colors.building, to_pygame_rect(floor_rect, self.HEIGHT))
         # draw area explored by agents
-        for floor_index, unexplored_floor_area_sorted_list in enumerate(self.unexplored_floors):
+        for floor_index, unexplored_floor_area_sorted_list in enumerate(self.unexplored_floors_areas):
             for unexplored_floor_area in unexplored_floor_area_sorted_list.sorted_list:
                 x1, x2 = unexplored_floor_area.x1, unexplored_floor_area.x2
                 pg.draw.rect(

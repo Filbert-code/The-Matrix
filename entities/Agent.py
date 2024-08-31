@@ -1,5 +1,6 @@
 import random
 from enum import Enum
+from typing import List
 
 import pygame as pg
 from pygame import Rect, Vector2
@@ -8,7 +9,9 @@ import colors
 from constants import SCREEN_WIDTH, WORLD_HEIGHT, WORLD_WIDTH
 from data_structures.UnexploredFloorAreasSortedList import UnexploredFloorAreasSortedList, UnexploredFloorArea
 from enums.AgentStates import AgentStates
+from enums.RoomClearingStates import RoomClearingStates
 from levels.LevelOne import LevelOne
+from levels.Room import Room
 from util.common import is_segments_overlapping, to_pygame_rect
 
 
@@ -18,6 +21,7 @@ class Agent(pg.sprite.Sprite):
     CLOSEST_STAIRWAY_DEFAULT_VALUE = [float('inf'), None]
     STARTING_HEALTH = 100
     HEALTH_BAR_WIDTH = 80
+    DEFAULT_ROOM_CLEARING_STATE = RoomClearingStates.MOVING_TO_ROOM
 
     def __init__(self, level, starting_floor, looking_right=True):
         pg.sprite.Sprite.__init__(self)
@@ -46,16 +50,34 @@ class Agent(pg.sprite.Sprite):
 
         self.health = self.STARTING_HEALTH
 
+        # initialize states for room clearing
+        self.room_clearing_state = self.DEFAULT_ROOM_CLEARING_STATE
+
     def update(self, dt):
         if self.state == AgentStates.DONE:
             self.dx = 0
             return
+
+        # TODO: Currently, agents only check the current floor's unexplored areas.
+        # TODO: Need to add logic to go to the next closest unexplored area in the building
+        # ---- FLOOR CLEARING ----
         elif self.state == AgentStates.FLOOR_CLEARING:
-            current_floor_unexplored_areas: UnexploredFloorAreasSortedList = self.level.unexplored_floors[
+            current_floor_unexplored_areas: UnexploredFloorAreasSortedList = self.level.unexplored_floors_areas[
                 self.current_floor - 1]
-            self.move_agent_towards_closest_rect(current_floor_unexplored_areas)
+            self.move_agent_towards_closest_unexplored_area(current_floor_unexplored_areas)
             self.update_floor_unexplored_area(current_floor_unexplored_areas)
 
+        # TODO: Currently, agents only check the current floor's unexplored rooms.
+        # TODO: Need to add logic to go to the next closest unexplored room in the building
+        # ---- ROOM CLEARING ----
+        elif self.state == AgentStates.ROOM_CLEARING:
+            floor_rooms = self.level.floors_rooms[self.current_floor - 1]
+            if self.room_clearing_state == RoomClearingStates.MOVING_TO_ROOM:
+                self.move_agent_towards_closest_room(floor_rooms)
+            elif self.room_clearing_state == RoomClearingStates.CLEARING_ROOM:
+                self.update_unexplored_room_area(floor_rooms)
+
+        # ---- CHANGING FLOORS ----
         elif self.state == AgentStates.CHANGING_FLOORS:
             stairway_rects_current_floor = self.level.stairways_rects[self.current_floor - 1]
             # if overlapping with a stairway, stop movement, and move to the target floor
@@ -96,7 +118,7 @@ class Agent(pg.sprite.Sprite):
         self.y = self.level.get_y_for_floor(self.current_floor)
         self.rect.y = self.y
 
-    def move_agent_towards_closest_rect(self, current_floor_unexplored_areas):
+    def move_agent_towards_closest_unexplored_area(self, current_floor_unexplored_areas):
         # LOGIC FOR MOVING PLAYER IN THE CORRECT DIRECTION
         # find the closest unexplored area, use this value to determine our vision vector
         closest_area = current_floor_unexplored_areas.find_closest_unexplored_floor_area(self.rect.centerx)
@@ -150,6 +172,16 @@ class Agent(pg.sprite.Sprite):
                         current_floor_unexplored_areas.sorted_list.remove(unexplored_area)
                     except ValueError as e:
                         print(e)
+
+    def move_agent_towards_closest_room(self, floor_rooms: List[Room]):
+        # find the closest floor room
+        closest_room = [float('inf'), None]  # distance, room
+        # for room in floor_rooms:
+        #     if room.
+        # move towards it
+
+    def update_unexplored_room_area(self, floor_rooms):
+        pass
 
     def draw(self, screen):
         pg.draw.rect(screen, colors.agent_searching, to_pygame_rect(self.rect, WORLD_HEIGHT))
