@@ -78,9 +78,8 @@ class TheMatrix:
                     mouse_vec = Vector2(mouse_pos_world_coord[0], mouse_pos_world_coord[1])
                     print(f'Neo_vec: {neo_vec}, Mouse_vec: {mouse_vec}')
                     normalized_delta_vec = (mouse_vec - neo_vec).normalize()
-                    speed = 4000
 
-                    bullet = Bullet((self.neo.rect.centerx, self.neo.rect.centery), (4000 * (1 if normalized_delta_vec.x > 0 else -1), 0))
+                    bullet = Bullet((self.neo.rect.centerx, self.neo.rect.centery), (3000 * (1 if normalized_delta_vec.x > 0 else -1), 0))
                     self.bullet_group.add(bullet)
             # mouse wheel events
             if event.type == pg.MOUSEWHEEL:
@@ -91,17 +90,27 @@ class TheMatrix:
             # keyboard events
             if event.type == pg.KEYDOWN:
                 keys = pg.key.get_pressed()
-                if keys[pg.K_w]:  # goes up a floor
+                if keys[pg.K_w]:  # goes up a floor or enters/exits room
                     floor_stairways_rects = self.level.get_current_floor_stairways_rects()
                     for stairway in floor_stairways_rects:
                         if self.neo.rect.colliderect(stairway):
                             self.level.floor_up()
                             break
-                if keys[pg.K_s]:  # goes down a floor
+                    rooms_rects = self.level.get_current_floor_rooms()
+                    for room in rooms_rects:
+                        if self.neo.rect.colliderect(room.door_rect):
+                            self.neo.enter_room(room)
+                            break
+                if keys[pg.K_s]:  # goes down a floor or enters/exits room
                     floor_stairways_rects = self.level.get_current_floor_stairways_rects()
                     for stairway in floor_stairways_rects:
                         if self.neo.rect.colliderect(stairway):
                             self.level.floor_down()
+                            break
+                    rooms_rects = self.level.get_current_floor_rooms()
+                    for room in rooms_rects:
+                        if self.neo.rect.colliderect(room.door_rect):
+                            self.neo.exit_room()
                             break
                 if keys[pg.K_e]:
                     self.camera.trigger_zoom_in_transition()
@@ -112,7 +121,9 @@ class TheMatrix:
         self.neo.update(self.dt)
         self.bullet_group.update(self.dt)
         self.agents_group.update(self.dt)
-        self.level.update(self.agents_group)
+
+        # check player bullets and agent collisions:
+        pg.sprite.groupcollide(self.bullet_group, self.agents_group, True, True)
 
         self.camera.update(self.neo, self.dt)
 
@@ -121,22 +132,22 @@ class TheMatrix:
         # draw background
         self.world.fill(colors.background)
         # insert drawing code here
-        self.level.draw(self.world)
+        self.level.draw(self.world, self.neo)
         self.neo.draw(self.world)
         self.bullet_group.draw(self.world)
         self.agents_group.draw(self.world)
         for agent in self.agents_group:
             pg.draw.line(self.world, colors.agent_searching, to_pygame_rect(agent.rect, WORLD_HEIGHT).center, (agent.vision_vector.x, WORLD_HEIGHT - agent.vision_vector.y), 2)
 
-        # draw a 10 x 10 grid
-        grid_row_num = 10
-        grid_col_num = 10
-        row_height = int(WORLD_HEIGHT / grid_row_num)
-        col_width = row_height
-        for y in range(0, WORLD_HEIGHT, row_height):
-            pg.draw.line(self.world, colors.grid, (0, y), (WORLD_WIDTH, y), 1)
-            for x in range(0, WORLD_WIDTH, col_width):
-                pg.draw.line(self.world, colors.grid, (x, 0), (x, WORLD_HEIGHT), 1)
+        # # draw a 10 x 10 grid
+        # grid_row_num = 10
+        # grid_col_num = 10
+        # row_height = int(WORLD_HEIGHT / grid_row_num)
+        # col_width = row_height
+        # for y in range(0, WORLD_HEIGHT, row_height):
+        #     pg.draw.line(self.world, colors.grid, (0, y), (WORLD_WIDTH, y), 1)
+        #     for x in range(0, WORLD_WIDTH, col_width):
+        #         pg.draw.line(self.world, colors.grid, (x, 0), (x, WORLD_HEIGHT), 1)
 
         self.camera.draw()
         self.hud.draw(self.screen)

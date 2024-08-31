@@ -6,7 +6,7 @@ from util.common import to_pygame_rect
 
 
 class Bullet(pg.sprite.Sprite):
-    WIDTH, HEIGHT = 10, 10
+    WIDTH, HEIGHT = 40, 10
 
     def __init__(self, pos, velocity):
         pg.sprite.Sprite.__init__(self)
@@ -15,7 +15,7 @@ class Bullet(pg.sprite.Sprite):
         self.dx, self.dy = velocity
 
         self.image = pg.Surface([self.WIDTH, self.HEIGHT], pg.SRCALPHA)
-        self.image.fill(colors.ui_font_color)
+        self.image.fill(colors.player)
         self.rect = self.image.get_rect()
         self.rect.center = (self.x, self.y)
 
@@ -26,3 +26,6 @@ class Bullet(pg.sprite.Sprite):
         # delete bullet when passed map boundaries
         if not 0 < self.rect.centerx < WORLD_WIDTH or not 0 < self.rect.centery < WORLD_HEIGHT:
             self.kill()
+
+    def draw(self, screen):
+        pg.draw.rect(screen, colors.player, to_pygame_rect(self.rect, WORLD_HEIGHT))

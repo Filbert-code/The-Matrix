@@ -9,13 +9,15 @@ from constants import SCREEN_WIDTH, WORLD_HEIGHT, WORLD_WIDTH
 from data_structures.UnexploredFloorAreasSortedList import UnexploredFloorAreasSortedList, UnexploredFloorArea
 from enums.AgentStates import AgentStates
 from levels.LevelOne import LevelOne
-from util.common import is_segments_overlapping
+from util.common import is_segments_overlapping, to_pygame_rect
 
 
 class Agent(pg.sprite.Sprite):
-    SPEED = 600
-    VIEW_DISTANCE = 150
+    SPEED = 400
+    VIEW_DISTANCE = 300
     CLOSEST_STAIRWAY_DEFAULT_VALUE = [float('inf'), None]
+    STARTING_HEALTH = 100
+    HEALTH_BAR_WIDTH = 80
 
     def __init__(self, level, starting_floor, looking_right=True):
         pg.sprite.Sprite.__init__(self)
@@ -24,9 +26,11 @@ class Agent(pg.sprite.Sprite):
         self.current_floor = starting_floor
 
         # initialize Agent rect, image, and velocity
-        self.rect = Rect(WORLD_WIDTH / 2 + random.randint(-1500, 1500), self.level.get_y_for_floor(starting_floor), 10, 125)
         self.image = pg.Surface((10, 125))
         self.image.fill(colors.agent_searching)
+        self.rect = self.image.get_rect()
+        self.rect.x = WORLD_WIDTH / 2 + random.randint(-1500, 1500)
+        self.rect.y = self.level.get_y_for_floor(starting_floor)
 
         self.x = self.rect.x
         self.y = self.rect.y
@@ -39,6 +43,8 @@ class Agent(pg.sprite.Sprite):
 
         # initialize states for changing floors
         self.closest_stairway = self.CLOSEST_STAIRWAY_DEFAULT_VALUE
+
+        self.health = self.STARTING_HEALTH
 
     def update(self, dt):
         if self.state == AgentStates.DONE:
@@ -145,5 +151,9 @@ class Agent(pg.sprite.Sprite):
                     except ValueError as e:
                         print(e)
 
-    def go_to_next_floor(self):
-        pass
+    def draw(self, screen):
+        pg.draw.rect(screen, colors.agent_searching, to_pygame_rect(self.rect, WORLD_HEIGHT))
+        # draw health bar
+        health_bar_rect = Rect(self.rect.x - self.HEALTH_BAR_WIDTH / 2, self.rect.bottom + 10, self.HEALTH_BAR_WIDTH + self.rect.width, 5)
+        pg.draw.rect(screen, colors.agent_hunting, to_pygame_rect(health_bar_rect, WORLD_HEIGHT))
+        # pg.draw.circle(screen, colors.agent_hunting, (to_pygame_rect(self.rect, WORLD_HEIGHT).centerx, to_pygame_rect(self.rect, WORLD_HEIGHT).top), 5)

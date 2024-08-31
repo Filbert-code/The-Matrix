@@ -18,5 +18,5 @@ class ExtendedGroup(pg.sprite.Group):
         surface_blit = surface.blit
         for spr in sprites:
             # self.spritedict[spr] = surface_blit(spr.image, spr.rect)
-            pg.draw.rect(surface, colors.agent_searching, to_pygame_rect(spr.rect, WORLD_HEIGHT))
+            spr.draw(surface)
         self.lostsprites = []
