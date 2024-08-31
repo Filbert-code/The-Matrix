@@ -132,14 +132,15 @@ class TheMatrix:
         self.world.set_clip(self.camera.get_camera_rect())
         # draw background
         self.world.fill(colors.background)
-        # insert drawing code here
+        # draw onto the world Surface
+        self.world.lock()  # optimization: locking a Surface during sequential draw calls to that surface
         self.level.draw(self.world, self.neo)
         self.neo.draw(self.world)
         self.bullet_group.draw(self.world)
         self.agents_group.draw(self.world)
         for agent in self.agents_group:
             pg.draw.line(self.world, colors.agent_searching, to_pygame_rect(agent.rect, WORLD_HEIGHT).center, (agent.vision_vector.x, WORLD_HEIGHT - agent.vision_vector.y), 2)
-
+        self.world.unlock()
         # # draw a 10 x 10 grid
         # grid_row_num = 10
         # grid_col_num = 10

@@ -7,8 +7,7 @@ from pygame import Rect, Vector2
 
 import colors
 from constants import SCREEN_WIDTH, WORLD_HEIGHT, WORLD_WIDTH
-from data_structures.UnexploredFloorAreasSortedList import UnexploredFloorAreasSortedList, UnexploredFloorArea
-from data_structures.UnexploredRoomAreasSortedList import UnexploredRoomAreasSortedList
+from data_structures.UnexploredAreasSortedList import UnexploredAreasSortedList, UnexploredArea
 from enums.AgentStates import AgentStates
 from enums.RoomClearingStates import RoomClearingStates
 from levels.LevelOne import LevelOne
@@ -58,37 +57,36 @@ class Agent(pg.sprite.Sprite):
         self.room_clearing_state = self.DEFAULT_ROOM_CLEARING_STATE
         self.in_room = False
         self.room = None
-        self.current_room_unexplored_areas: UnexploredRoomAreasSortedList | None = None
+        self.current_room_unexplored_areas: UnexploredAreasSortedList | None = None
 
     def update(self, dt):
         if self.state == AgentStates.DONE:
             self.dx = 0
             return
 
-        # TODO: Currently, agents only check the current floor's unexplored areas.
-        # TODO: Need to add logic to go to the next closest unexplored area in the building
+        # There is a hierarchy of states the Agent can be in
+        # 1. AgentStates: general states that encompass all major actions the Agent can do
+        # 2. RoomClearingStates: states specific for when the Agent is in AgentStates.ROOM_CLEARING mode
+        #
+        # The logic below should form a closed loop, where each state leads towards transitioning into another state,
+        # ultimately trying to find Neo and hunt him down
+
         # ---- FLOOR CLEARING ----
         elif self.state == AgentStates.FLOOR_CLEARING:
-            current_floor_unexplored_areas: UnexploredFloorAreasSortedList = self.level.unexplored_floors_areas[
+            current_floor_unexplored_areas: UnexploredAreasSortedList = self.level.unexplored_floors_areas[
                 self.current_floor - 1]
             self.move_agent_towards_closest_unexplored_floor_area(current_floor_unexplored_areas)
             self.update_floor_unexplored_area(current_floor_unexplored_areas)
 
-        # TODO: Currently, agents only check the current floor's unexplored rooms.
-        # TODO: Need to add logic to go to the next closest unexplored room in the building
         # ---- ROOM CLEARING ----
         elif self.state == AgentStates.ROOM_CLEARING:
             if self.room_clearing_state == RoomClearingStates.MOVING_TO_ROOM:
-                print('moving to room')
                 floor_rooms = self.level.floors_rooms[self.current_floor - 1]
                 self.move_agent_towards_closest_room(floor_rooms)
             elif self.room_clearing_state == RoomClearingStates.CLEARING_ROOM:
-                print('clearing room')
                 self.move_agent_towards_closest_unexplored_room_area(self.current_room_unexplored_areas)
                 self.update_floor_unexplored_area(self.current_room_unexplored_areas)
-                # TODO: make sure to set room.fully_explored to True once finished clearing
             elif self.room_clearing_state == RoomClearingStates.LEAVING_ROOM:
-                print('leaving room')
                 self.move_agent_towards_door()
 
         # ---- CHANGING FLOORS ----
@@ -178,7 +176,7 @@ class Agent(pg.sprite.Sprite):
 
             if agent_x1 >= unexplored_area.x1 and agent_x2 <= unexplored_area.x2:
                 # the agent has unexplored area forwards and backwards. Need to split the unexplored area into 2
-                new_unexplored_area = UnexploredFloorArea(agent_x2, unexplored_area.x2)
+                new_unexplored_area = UnexploredArea(agent_x2, unexplored_area.x2)
                 current_floor_unexplored_areas.sorted_list.add(new_unexplored_area)
                 unexplored_area.x2 = agent_x1
                 # break here because we know our vision is completely within this unexplored area and none others
@@ -262,7 +260,7 @@ class Agent(pg.sprite.Sprite):
             self.room_clearing_state = self.DEFAULT_ROOM_CLEARING_STATE
             self.in_room = False
             self.room = None
-            self.current_room_unexplored_areas: UnexploredRoomAreasSortedList | None = None
+            self.current_room_unexplored_areas: UnexploredAreasSortedList | None = None
             self.set_boundaries(self.DEFAULT_X_BOUNDARIES)
         elif self.rect.centerx > self.room.door_rect.centerx:
             # move left

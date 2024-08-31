@@ -3,13 +3,13 @@ from typing import List
 from sortedcontainers import SortedList
 
 
-class UnexploredFloorArea:
+class UnexploredArea:
     def __init__(self, x1, x2):
         self.x1 = x1
         self.x2 = x2
 
     def __lt__(self, other):
-        if type(other) is UnexploredFloorArea:
+        if type(other) is UnexploredArea:
             return self.x1 < other.x1
         elif type(other) is int:
             return self.x2 < other
@@ -28,20 +28,20 @@ class UnexploredFloorArea:
 # UnexploredFloorArea to any given x-position
 # Insertions are O(n) (unfortunately)
 # Finding is O(log(n))
-class UnexploredFloorAreasSortedList:
-    def __init__(self, floor_size, unexplored_floor_areas: List[UnexploredFloorArea] = None, building_horizontal_padding=0):
-        self.floor_size = floor_size
+class UnexploredAreasSortedList:
+    def __init__(self, x_boundaries, unexplored_floor_areas: List[UnexploredArea] = None, building_horizontal_padding=0):
+        self.x_left_boundary, self.x_right_boundary = x_boundaries
         self.sorted_list = SortedList()
         if unexplored_floor_areas:
             self.add_unexplored_floor_areas(unexplored_floor_areas)
         else:
-            self.sorted_list.add(UnexploredFloorArea(building_horizontal_padding, self.floor_size - building_horizontal_padding))
+            self.sorted_list.add(UnexploredArea(self.x_left_boundary + building_horizontal_padding, self.x_right_boundary - building_horizontal_padding))
 
     def add_unexplored_floor_areas(self, unexplored_floor_areas):
         for unexplored_floor_area in unexplored_floor_areas:
             self.sorted_list.add(unexplored_floor_area)
 
-    def find_closest_unexplored_area(self, x_pos) -> UnexploredFloorArea | None:
+    def find_closest_unexplored_area(self, x_pos) -> UnexploredArea | None:
         if len(self.sorted_list) == 0:
             return None
 
@@ -68,11 +68,11 @@ class UnexploredFloorAreasSortedList:
 
 if __name__ == '__main__':
     unexplored_areas = [
-        UnexploredFloorArea(30, 100),
-        UnexploredFloorArea(120, 170),
-        UnexploredFloorArea(200, 210)
+        UnexploredArea(30, 100),
+        UnexploredArea(120, 170),
+        UnexploredArea(200, 210)
     ]
-    sorted_list = UnexploredFloorAreasSortedList(unexplored_areas)
+    sorted_list = UnexploredAreasSortedList(unexplored_areas)
     player_pos = 186
 
     # print(sorted_list.find_closest_floor_area(player_pos))
