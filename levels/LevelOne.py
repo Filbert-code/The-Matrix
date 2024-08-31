@@ -52,7 +52,7 @@ class LevelOne:
         self.unexplored_floors_areas = [UnexploredFloorAreasSortedList(self.WIDTH, None, self.BUILDING_HORIZONTAL_PADDING) for _ in range(self.NUMBER_OF_FLOORS)]
         self.unexplored_rooms_areas = []
         for floor_rooms_list in self.floors_rooms:
-            unexplored_rooms_for_floor = [UnexploredRoomAreasSortedList(room.room_rect.width, None) for room in floor_rooms_list]
+            unexplored_rooms_for_floor = [UnexploredRoomAreasSortedList(room.room_rect, None) for room in floor_rooms_list]
             self.unexplored_rooms_areas.append(unexplored_rooms_for_floor)
 
     def update(self, agents):
@@ -85,13 +85,24 @@ class LevelOne:
     def draw(self, screen, neo):
         for floor_rect in self.floors_rects:
             pg.draw.rect(screen, colors.building, to_pygame_rect(floor_rect, self.HEIGHT))
-        # draw area explored by agents
+        # draw room areas unexplored by agents
+        for floor_index, unexplored_rooms_in_floor in enumerate(self.unexplored_rooms_areas):
+            for unexplored_room_area_sorted_list in unexplored_rooms_in_floor:
+                for unexplored_room_area in unexplored_room_area_sorted_list.sorted_list:
+                    x1, x2 = unexplored_room_area.x1, unexplored_room_area.x2
+                    pg.draw.rect(
+                        screen,
+                        colors.unexplored_room_regions,
+                        to_pygame_rect(Rect(x1, self.floors_rects[floor_index].y, abs(x2 - x1), self.FLOOR_HEIGHT),
+                                       WORLD_HEIGHT)
+                    )
+        # draw floor areas unexplored by agents
         for floor_index, unexplored_floor_area_sorted_list in enumerate(self.unexplored_floors_areas):
             for unexplored_floor_area in unexplored_floor_area_sorted_list.sorted_list:
                 x1, x2 = unexplored_floor_area.x1, unexplored_floor_area.x2
                 pg.draw.rect(
                     screen,
-                    colors.unexplored_regions,
+                    colors.unexplored_floor_regions,
                     to_pygame_rect(Rect(x1, self.floors_rects[floor_index].y, abs(x2 - x1), self.FLOOR_HEIGHT),
                                    WORLD_HEIGHT)
                 )

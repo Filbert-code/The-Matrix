@@ -41,7 +41,7 @@ class UnexploredFloorAreasSortedList:
         for unexplored_floor_area in unexplored_floor_areas:
             self.sorted_list.add(unexplored_floor_area)
 
-    def find_closest_unexplored_floor_area(self, x_pos) -> UnexploredFloorArea | None:
+    def find_closest_unexplored_area(self, x_pos) -> UnexploredFloorArea | None:
         if len(self.sorted_list) == 0:
             return None
 

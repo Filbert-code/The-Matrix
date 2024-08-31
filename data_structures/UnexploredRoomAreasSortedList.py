@@ -26,19 +26,19 @@ class UnexploredRoomArea:
 
 # same logic for finding the closest unexplored area for floors, but for rooms instead
 class UnexploredRoomAreasSortedList:
-    def __init__(self, room_size, unexplored_room_areas: List[UnexploredRoomArea] = None):
-        self.room_size = room_size
+    def __init__(self, room_rect, unexplored_room_areas: List[UnexploredRoomArea] = None):
+        self.room_rect = room_rect
         self.sorted_list = SortedList()
         if unexplored_room_areas:
             self.add_unexplored_room_areas(unexplored_room_areas)
         else:
-            self.sorted_list.add(UnexploredRoomArea(0, self.room_size))
+            self.sorted_list.add(UnexploredRoomArea(self.room_rect.x, self.room_rect.x + self.room_rect.width))
 
     def add_unexplored_room_areas(self, unexplored_room_areas):
         for unexplored_room_area in unexplored_room_areas:
             self.sorted_list.add(unexplored_room_area)
 
-    def find_closest_unexplored_room_area(self, x_pos) -> UnexploredRoomArea | None:
+    def find_closest_unexplored_area(self, x_pos) -> UnexploredRoomArea | None:
         if len(self.sorted_list) == 0:
             return None
 
