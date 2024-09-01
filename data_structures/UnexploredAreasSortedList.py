@@ -2,6 +2,8 @@ from typing import List
 
 from sortedcontainers import SortedList
 
+from util.common import is_segments_overlapping
+
 
 class UnexploredArea:
     def __init__(self, x1, x2):
@@ -64,6 +66,44 @@ class UnexploredAreasSortedList:
 
     def bisect_left(self, other):
         self.sorted_list.bisect_left(other)
+
+    def update_unexplored_area(self, agent):
+        # LOGIC FOR UPDATING THE LEVEL'S SORTED UNEXPLORED AREA DATA STRUCTURE
+        # Check if vision vector overlaps with any unexplored areas
+        # If it does, update the overlapped area to reduce its range
+        for unexplored_area in self.sorted_list:
+            agent_x1, agent_x2 = min(agent.rect.centerx, int(agent.vision_vector[0])), max(agent.rect.centerx, int(agent.vision_vector[0]))
+
+            if agent_x1 <= unexplored_area.x1 <= agent_x2 and agent_x1 <= unexplored_area.x2 <= agent_x2:
+                # area is within the vision area
+                self.sorted_list.remove(unexplored_area)
+
+            # if agent does not overlap with unexplored area, skip
+            if not is_segments_overlapping((unexplored_area.x1, unexplored_area.x2), (agent_x1, agent_x2)):
+                continue
+
+            if agent_x1 >= unexplored_area.x1 and agent_x2 <= unexplored_area.x2:
+                # the agent has unexplored area forwards and backwards. Need to split the unexplored area into 2
+                new_unexplored_area = UnexploredArea(agent_x2, unexplored_area.x2)
+                self.sorted_list.add(new_unexplored_area)
+                unexplored_area.x2 = agent_x1
+                # break here because we know our vision is completely within this unexplored area and none others
+                break
+
+            if agent_x1 >= unexplored_area.x1 and agent_x2 >= unexplored_area.x2:
+                unexplored_area.x2 = agent_x1
+                if abs(unexplored_area.x2 - unexplored_area.x1) < 5:
+                    try:
+                        self.sorted_list.remove(unexplored_area)
+                    except ValueError as e:
+                        print(e)
+            elif agent_x1 <= unexplored_area.x1 and agent_x2 <= unexplored_area.x2:
+                unexplored_area.x1 = agent_x2
+                if abs(unexplored_area.x2 - unexplored_area.x1) < 5:
+                    try:
+                        self.sorted_list.remove(unexplored_area)
+                    except ValueError as e:
+                        print(e)
 
 
 if __name__ == '__main__':

@@ -76,7 +76,7 @@ class Agent(pg.sprite.Sprite):
             current_floor_unexplored_areas: UnexploredAreasSortedList = self.level.unexplored_floors_areas[
                 self.current_floor - 1]
             self.move_agent_towards_closest_unexplored_floor_area(current_floor_unexplored_areas)
-            self.update_floor_unexplored_area(current_floor_unexplored_areas)
+            current_floor_unexplored_areas.update_unexplored_area(self)
 
         # ---- ROOM CLEARING ----
         elif self.state == AgentStates.ROOM_CLEARING:
@@ -85,39 +85,42 @@ class Agent(pg.sprite.Sprite):
                 self.move_agent_towards_closest_room(floor_rooms)
             elif self.room_clearing_state == RoomClearingStates.CLEARING_ROOM:
                 self.move_agent_towards_closest_unexplored_room_area(self.current_room_unexplored_areas)
-                self.update_floor_unexplored_area(self.current_room_unexplored_areas)
+                self.current_room_unexplored_areas.update_unexplored_area(self)
             elif self.room_clearing_state == RoomClearingStates.LEAVING_ROOM:
                 self.move_agent_towards_current_room_door()
 
         # ---- CHANGING FLOORS ----
         elif self.state == AgentStates.CHANGING_FLOORS:
             stairway_rects_current_floor = self.level.stairways_rects[self.current_floor - 1]
-            # if overlapping with a stairway, stop movement, and move to the target floor
-            for stairway_rect in stairway_rects_current_floor:
-                if is_segments_overlapping((stairway_rect.x, stairway_rect.x + stairway_rect.width),
-                                           (self.x, self.x + 10)):
-                    if not self.current_floor + 1 > self.level.NUMBER_OF_FLOORS:
-                        self.current_floor += 1
-                    else:
-                        self.state = AgentStates.DONE
-                        break
-                    self.state = AgentStates.FLOOR_CLEARING
-                    self.closest_stairway = self.CLOSEST_STAIRWAY_DEFAULT_VALUE
-                    break
-            # find the closest stairway
-            for stairway_rect in stairway_rects_current_floor:
-                stairway_distance = min(abs(self.x - stairway_rect.x),
-                                        abs(self.x - stairway_rect.x + stairway_rect.width))
-                if stairway_distance < self.closest_stairway[0]:
-                    self.closest_stairway = [stairway_distance, stairway_rect]
-            # move towards it
-            self.dx = self.SPEED if self.x - self.closest_stairway[1].x < 0 else -self.SPEED
-            self.vision_vector = Vector2(self.rect.centerx + (
-                self.VIEW_DISTANCE if self.x - self.closest_stairway[1].x < 0 else -self.VIEW_DISTANCE),
-                                         self.rect.centery)
+            self.handle_move_up_floor_if_in_stairway(stairway_rects_current_floor)
+            self.move_towards_closest_stairway(stairway_rects_current_floor)
 
         # print(current_floor_unexplored_areas.sorted_list)
         self.move(dt)
+
+    def handle_move_up_floor_if_in_stairway(self, stairway_rects_current_floor):
+        # if overlapping with a stairway, stop movement, and move to the target floor
+        for stairway_rect in stairway_rects_current_floor:
+            if is_segments_overlapping((stairway_rect.x, stairway_rect.x + stairway_rect.width),
+                                       (self.x, self.x + 10)):
+                if not self.current_floor + 1 > self.level.NUMBER_OF_FLOORS:
+                    self.current_floor += 1
+                else:
+                    self.state = AgentStates.DONE
+                    break
+                self.state = AgentStates.FLOOR_CLEARING
+                self.closest_stairway = self.CLOSEST_STAIRWAY_DEFAULT_VALUE
+                break
+
+    def move_towards_closest_stairway(self, stairway_rects_current_floor):
+        # find the closest stairway
+        for stairway_rect in stairway_rects_current_floor:
+            stairway_distance = min(abs(self.x - stairway_rect.x),
+                                    abs(self.x - stairway_rect.x + stairway_rect.width))
+            if stairway_distance < self.closest_stairway[0]:
+                self.closest_stairway = [stairway_distance, stairway_rect]
+        # move towards it
+        self.move_agent_towards_x_pos(self.closest_stairway[1].x)
 
     def move(self, dt):
         # eventual decision process:
@@ -151,45 +154,6 @@ class Agent(pg.sprite.Sprite):
             self.state = AgentStates.ROOM_CLEARING
         else:
             self.move_agent_towards_x_pos(closest_area.x1)
-
-    # TODO: Move this function?
-    def update_floor_unexplored_area(self, current_floor_unexplored_areas):
-        # LOGIC FOR UPDATING THE LEVEL'S SORTED UNEXPLORED AREA DATA STRUCTURE FOR THE CURRENT FLOOR
-        # Check if vision vector overlaps with any unexplored floor areas
-        # If it does, update the overlapped area to reduce its range
-        for unexplored_area in current_floor_unexplored_areas.sorted_list:
-            agent_x1, agent_x2 = min(self.rect.centerx, int(self.vision_vector[0])), max(self.rect.centerx, int(self.vision_vector[0]))
-
-            if agent_x1 <= unexplored_area.x1 <= agent_x2 and agent_x1 <= unexplored_area.x2 <= agent_x2:
-                # area is within the vision area
-                current_floor_unexplored_areas.sorted_list.remove(unexplored_area)
-
-            # if agent does not overlap with unexplored area, skip
-            if not is_segments_overlapping((unexplored_area.x1, unexplored_area.x2), (agent_x1, agent_x2)):
-                continue
-
-            if agent_x1 >= unexplored_area.x1 and agent_x2 <= unexplored_area.x2:
-                # the agent has unexplored area forwards and backwards. Need to split the unexplored area into 2
-                new_unexplored_area = UnexploredArea(agent_x2, unexplored_area.x2)
-                current_floor_unexplored_areas.sorted_list.add(new_unexplored_area)
-                unexplored_area.x2 = agent_x1
-                # break here because we know our vision is completely within this unexplored area and none others
-                break
-
-            if agent_x1 >= unexplored_area.x1 and agent_x2 >= unexplored_area.x2:
-                unexplored_area.x2 = agent_x1
-                if abs(unexplored_area.x2 - unexplored_area.x1) < 5:
-                    try:
-                        current_floor_unexplored_areas.sorted_list.remove(unexplored_area)
-                    except ValueError as e:
-                        print(e)
-            elif agent_x1 <= unexplored_area.x1 and agent_x2 <= unexplored_area.x2:
-                unexplored_area.x1 = agent_x2
-                if abs(unexplored_area.x2 - unexplored_area.x1) < 5:
-                    try:
-                        current_floor_unexplored_areas.sorted_list.remove(unexplored_area)
-                    except ValueError as e:
-                        print(e)
 
     def move_agent_towards_closest_room(self, floor_rooms: List[Room]):
         # find the closest floor room
