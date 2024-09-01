@@ -10,13 +10,15 @@ class Neo:
     SPEED = 1000
     DEFAULT_X_BOUNDARIES = (0, WORLD_WIDTH)
 
-    def __init__(self, level):
+    def __init__(self, level, starting_floor):
         self.level = level
-        self.rect = Rect(SCREEN_WIDTH // 2, level.get_current_floor_y(), 10, 125)
+        self.rect = Rect(SCREEN_WIDTH // 2, level.get_y_for_floor(starting_floor), 10, 125)
         self.x = self.rect.x
         self.y = self.rect.y
         self.dx = 0
         self.dy = 0
+
+        self.current_floor = starting_floor
 
         self.in_room = False
         self.room = None
@@ -38,14 +40,10 @@ class Neo:
             self.dx = -Neo.SPEED
         if keys[pg.K_d]:
             self.dx = Neo.SPEED
-        # if keys[pg.K_w]:
-        #     self.dy = -Neo.SPEED
-        # if keys[pg.K_s]:
-        #     self.dy = Neo.SPEED
 
         self.x += self.dx * dt
         self.rect.x = self.x
-        self.y = self.level.get_current_floor_y()
+        self.y = self.level.get_y_for_floor(self.current_floor)
         self.rect.y = self.y
 
         # enforce boundaries
@@ -68,3 +66,9 @@ class Neo:
 
     def set_boundaries(self, new_boundaries):
         self.x_boundaries = new_boundaries
+
+    def move_up_a_floor(self):
+        self.current_floor += 1
+
+    def move_down_a_floor(self):
+        self.current_floor -= 1

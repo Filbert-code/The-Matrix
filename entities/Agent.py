@@ -87,7 +87,7 @@ class Agent(pg.sprite.Sprite):
                 self.move_agent_towards_closest_unexplored_room_area(self.current_room_unexplored_areas)
                 self.update_floor_unexplored_area(self.current_room_unexplored_areas)
             elif self.room_clearing_state == RoomClearingStates.LEAVING_ROOM:
-                self.move_agent_towards_door()
+                self.move_agent_towards_current_room_door()
 
         # ---- CHANGING FLOORS ----
         elif self.state == AgentStates.CHANGING_FLOORS:
@@ -149,22 +149,16 @@ class Agent(pg.sprite.Sprite):
         if closest_area is None:
             # ** SWITCHING TO ROOM_CLEARING STATE HERE **
             self.state = AgentStates.ROOM_CLEARING
-        elif self.rect.centerx > closest_area.x1:
-            # move left
-            self.dx = -self.SPEED
-            self.vision_vector = Vector2(self.rect.centerx - self.VIEW_DISTANCE, self.rect.centery)
-        elif self.rect.centerx < closest_area.x1:
-            # move right
-            self.dx = self.SPEED
-            self.vision_vector = Vector2(self.rect.centerx + self.VIEW_DISTANCE, self.rect.centery)
+        else:
+            self.move_agent_towards_x_pos(closest_area.x1)
 
+    # TODO: Move this function?
     def update_floor_unexplored_area(self, current_floor_unexplored_areas):
         # LOGIC FOR UPDATING THE LEVEL'S SORTED UNEXPLORED AREA DATA STRUCTURE FOR THE CURRENT FLOOR
         # Check if vision vector overlaps with any unexplored floor areas
         # If it does, update the overlapped area to reduce its range
         for unexplored_area in current_floor_unexplored_areas.sorted_list:
-            agent_x1, agent_x2 = min(self.rect.centerx, int(self.vision_vector[0])), max(self.rect.centerx,
-                                                                                         int(self.vision_vector[0]))
+            agent_x1, agent_x2 = min(self.rect.centerx, int(self.vision_vector[0])), max(self.rect.centerx, int(self.vision_vector[0]))
 
             if agent_x1 <= unexplored_area.x1 <= agent_x2 and agent_x1 <= unexplored_area.x2 <= agent_x2:
                 # area is within the vision area
@@ -207,7 +201,6 @@ class Agent(pg.sprite.Sprite):
             if distance_to_room < closest_room[0]:
                 closest_room = (distance_to_room, room, i)
         if closest_room[1] is None:
-            print('No rooms to explore on this floor.')
             # ** SWITCHING TO CHANGING_FLOORS STATE HERE **
             self.state = AgentStates.CHANGING_FLOORS
             return
@@ -217,59 +210,50 @@ class Agent(pg.sprite.Sprite):
                 (self.rect.x, self.rect.x + self.rect.width),
                 (closest_room[1].door_rect.x, closest_room[1].door_rect.x + closest_room[1].door_rect.width)
         ):
-            self.in_room = True
-            self.room = closest_room[1]
-            self.set_boundaries((self.room.room_rect.left, self.room.room_rect.right))
-            self.room_clearing_state = RoomClearingStates.CLEARING_ROOM
-            self.current_room_unexplored_areas = self.level.unexplored_rooms_areas[self.current_floor - 1][closest_room[2]]
+            self.enter_room(room=closest_room[1], room_index=closest_room[2])
 
-        # move towards it
-        if self.rect.centerx > closest_room[1].door_rect.centerx:
-            # move left
-            self.dx = -self.SPEED
-            self.vision_vector = Vector2(self.rect.centerx - self.VIEW_DISTANCE, self.rect.centery)
-        elif self.rect.centerx < closest_room[1].door_rect.centerx:
-            # move right
-            self.dx = self.SPEED
-            self.vision_vector = Vector2(self.rect.centerx + self.VIEW_DISTANCE, self.rect.centery)
+        self.move_agent_towards_x_pos(closest_room[1].door_rect.centerx)
 
     def move_agent_towards_closest_unexplored_room_area(self, current_unexplored_areas):
         # LOGIC FOR MOVING PLAYER IN THE CORRECT DIRECTION
         # find the closest unexplored area, use this value to determine our vision vector
         closest_area = current_unexplored_areas.find_closest_unexplored_area(self.rect.centerx)
-        print()
         if closest_area is None:
             # ** SWITCHING TO ROOM_CLEARING STATE HERE **
             self.room_clearing_state = RoomClearingStates.LEAVING_ROOM
             self.room.fully_explored = True
-        elif self.rect.centerx > closest_area.x1:
-            # move left
-            self.dx = -self.SPEED
-            self.vision_vector = Vector2(self.rect.centerx - self.VIEW_DISTANCE, self.rect.centery)
-        elif self.rect.centerx < closest_area.x1:
-            # move right
-            self.dx = self.SPEED
-            self.vision_vector = Vector2(self.rect.centerx + self.VIEW_DISTANCE, self.rect.centery)
+        else:
+            self.move_agent_towards_x_pos(closest_area.x1)
 
-    def update_unexplored_room_area(self, floor_rooms):
-        pass
-
-    def move_agent_towards_door(self):
+    def move_agent_towards_current_room_door(self):
         if is_segments_overlapping((self.rect.x, self.rect.x + self.rect.width), (self.room.door_rect.x, self.room.door_rect.x + self.room.door_rect.width)):
-            # exit the room
-            self.room_clearing_state = self.DEFAULT_ROOM_CLEARING_STATE
-            self.in_room = False
-            self.room = None
-            self.current_room_unexplored_areas: UnexploredAreasSortedList | None = None
-            self.set_boundaries(self.DEFAULT_X_BOUNDARIES)
-        elif self.rect.centerx > self.room.door_rect.centerx:
+            self.exit_room()
+        else:
+            self.move_agent_towards_x_pos(self.room.door_rect.centerx)
+
+    def move_agent_towards_x_pos(self, x):
+        if self.rect.centerx > x:
             # move left
             self.dx = -self.SPEED
             self.vision_vector = Vector2(self.rect.centerx - self.VIEW_DISTANCE, self.rect.centery)
-        elif self.rect.centerx < self.room.door_rect.centerx:
+        elif self.rect.centerx < x:
             # move right
             self.dx = self.SPEED
             self.vision_vector = Vector2(self.rect.centerx + self.VIEW_DISTANCE, self.rect.centery)
+
+    def enter_room(self, room, room_index):
+        self.in_room = True
+        self.room = room
+        self.set_boundaries((self.room.room_rect.left, self.room.room_rect.right))
+        self.room_clearing_state = RoomClearingStates.CLEARING_ROOM
+        self.current_room_unexplored_areas = self.level.unexplored_rooms_areas[self.current_floor - 1][room_index]
+
+    def exit_room(self):
+        self.room_clearing_state = self.DEFAULT_ROOM_CLEARING_STATE
+        self.in_room = False
+        self.room = None
+        self.current_room_unexplored_areas: UnexploredAreasSortedList | None = None
+        self.set_boundaries(self.DEFAULT_X_BOUNDARIES)
 
     def draw(self, screen):
         pg.draw.rect(screen, colors.agent_searching, to_pygame_rect(self.rect, WORLD_HEIGHT))
@@ -277,7 +261,6 @@ class Agent(pg.sprite.Sprite):
         health_bar_rect = Rect(self.rect.x - self.HEALTH_BAR_WIDTH / 2, self.rect.bottom + 10,
                                self.HEALTH_BAR_WIDTH + self.rect.width, 5)
         pg.draw.rect(screen, colors.agent_hunting, to_pygame_rect(health_bar_rect, WORLD_HEIGHT))
-        # pg.draw.circle(screen, colors.agent_hunting, (to_pygame_rect(self.rect, WORLD_HEIGHT).centerx, to_pygame_rect(self.rect, WORLD_HEIGHT).top), 5)
 
     def set_boundaries(self, new_boundaries):
         self.x_boundaries = new_boundaries

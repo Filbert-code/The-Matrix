@@ -24,7 +24,7 @@ class TheMatrix:
         self.screen = pg.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT), pg.SRCALPHA)
         self.world = pg.Surface((SCREEN_WIDTH * 2, SCREEN_HEIGHT * 2), pg.SRCALPHA)
         self.level = LevelOne()
-        self.neo = Neo(self.level)
+        self.neo = Neo(self.level, starting_floor=6)
         self.camera = PlayerFollowCamera(
             self.screen,
             self.world,
@@ -92,23 +92,23 @@ class TheMatrix:
             if event.type == pg.KEYDOWN:
                 keys = pg.key.get_pressed()
                 if keys[pg.K_w]:  # goes up a floor or enters/exits room
-                    floor_stairways_rects = self.level.get_current_floor_stairways_rects()
+                    floor_stairways_rects = self.level.get_floor_stairways_rects(self.neo.current_floor)
                     for stairway in floor_stairways_rects:
                         if self.neo.rect.colliderect(stairway):
-                            self.level.floor_up()
+                            self.neo.move_up_a_floor()
                             break
-                    rooms_rects = self.level.get_current_floor_rooms()
+                    rooms_rects = self.level.get_floor_rooms(self.neo.current_floor)
                     for room in rooms_rects:
                         if self.neo.rect.colliderect(room.door_rect):
                             self.neo.enter_room(room)
                             break
                 if keys[pg.K_s]:  # goes down a floor or enters/exits room
-                    floor_stairways_rects = self.level.get_current_floor_stairways_rects()
+                    floor_stairways_rects = self.level.get_floor_stairways_rects(self.neo.current_floor)
                     for stairway in floor_stairways_rects:
                         if self.neo.rect.colliderect(stairway):
-                            self.level.floor_down()
+                            self.neo.move_down_a_floor()
                             break
-                    rooms_rects = self.level.get_current_floor_rooms()
+                    rooms_rects = self.level.get_floor_rooms(self.neo.current_floor)
                     for room in rooms_rects:
                         if self.neo.rect.colliderect(room.door_rect):
                             self.neo.exit_room()

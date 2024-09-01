@@ -68,14 +68,11 @@ class LevelOne:
             unexplored_rooms_for_floor = [UnexploredAreasSortedList((room.room_rect.x, room.room_rect.x + room.room_rect.width), None) for room in floor_rooms_list]
             self.unexplored_rooms_areas.append(unexplored_rooms_for_floor)
 
-    def get_current_floor_stairways_rects(self):
-        return self.stairways_rects[self.current_player_floor - 1]
+    def get_floor_stairways_rects(self, floor_num):
+        return self.stairways_rects[floor_num - 1]
 
-    def get_current_floor_rooms(self):
-        return self.floors_rooms[self.current_player_floor - 1]
-
-    def get_current_floor_y(self):
-        return self.floors_rects[self.current_player_floor - 1].y
+    def get_floor_rooms(self, floor_num):
+        return self.floors_rooms[floor_num - 1]
 
     def get_y_for_floor(self, floor_num):
         return self.floors_rects[floor_num - 1].y
