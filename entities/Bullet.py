@@ -18,6 +18,7 @@ class Bullet(pg.sprite.Sprite):
         self.image.fill(colors.player)
         self.rect = self.image.get_rect()
         self.rect.center = (self.x, self.y)
+        self.damage = 40
 
     def update(self, dt):
         self.rect.x += self.dx * dt

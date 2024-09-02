@@ -50,7 +50,6 @@ class Agent(pg.sprite.Sprite):
 
         # initialize states for changing floors
         self.closest_stairway = self.CLOSEST_STAIRWAY_DEFAULT_VALUE
-
         self.health = self.STARTING_HEALTH
 
         # initialize states for room clearing
@@ -222,9 +221,15 @@ class Agent(pg.sprite.Sprite):
     def draw(self, screen):
         pg.draw.rect(screen, colors.agent_searching, to_pygame_rect(self.rect, WORLD_HEIGHT))
         # draw health bar
-        health_bar_rect = Rect(self.rect.x - self.HEALTH_BAR_WIDTH / 2, self.rect.bottom + 10,
-                               self.HEALTH_BAR_WIDTH + self.rect.width, 5)
+        health_bar_width = self.HEALTH_BAR_WIDTH * (self.health / self.STARTING_HEALTH)
+        health_bar_rect = Rect(self.rect.x - health_bar_width / 2, self.rect.bottom + 10,
+                               health_bar_width + self.rect.width, 5)
         pg.draw.rect(screen, colors.agent_hunting, to_pygame_rect(health_bar_rect, WORLD_HEIGHT))
 
     def set_boundaries(self, new_boundaries):
         self.x_boundaries = new_boundaries
+
+    def handle_damage_taken(self, damage):
+        self.health -= damage
+        if self.health < 0:
+            self.kill()

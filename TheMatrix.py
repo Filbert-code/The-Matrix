@@ -123,8 +123,10 @@ class TheMatrix:
         self.bullet_group.update(self.dt)
         self.agents_group.update(self.dt)
 
-        # check player bullets and agent collisions:
-        pg.sprite.groupcollide(self.bullet_group, self.agents_group, True, True)
+        # Every Sprite inside group1 is added to the return dictionary. The value for each item is the list of Sprites in group2 that intersect.
+        collisions_sprite_dict = pg.sprite.groupcollide(self.agents_group, self.bullet_group, False, True)
+        for agent, bullets in collisions_sprite_dict.items():
+            agent.handle_damage_taken(sum([bullet.damage for bullet in bullets]))
 
         self.camera.update(self.neo, self.dt)
 

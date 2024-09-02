@@ -22,6 +22,7 @@ class Neo:
 
         self.in_room = False
         self.room = None
+        self.health = 100
 
         self.x_boundaries = self.DEFAULT_X_BOUNDARIES
 
