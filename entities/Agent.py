@@ -8,6 +8,8 @@ from pygame import Rect, Vector2
 import colors
 from constants import SCREEN_WIDTH, WORLD_HEIGHT, WORLD_WIDTH
 from data_structures.UnexploredAreasSortedList import UnexploredAreasSortedList, UnexploredArea
+from entities.BasicPistol import BasicPistol
+from entities.Bullet import Bullet
 from enums.AgentStates import AgentStates
 from enums.RoomClearingStates import RoomClearingStates
 from levels.LevelOne import LevelOne
@@ -17,16 +19,18 @@ from util.common import is_segments_overlapping, to_pygame_rect
 
 class Agent(pg.sprite.Sprite):
     SPEED = 400
-    VIEW_DISTANCE = 400
+    VIEW_DISTANCE = 500
     DEFAULT_X_BOUNDARIES = (0, WORLD_WIDTH)
     CLOSEST_STAIRWAY_DEFAULT_VALUE = [float('inf'), None]
     STARTING_HEALTH = 100
     HEALTH_BAR_WIDTH = 80
     DEFAULT_ROOM_CLEARING_STATE = RoomClearingStates.MOVING_TO_ROOM
+    STATUS_FONT = pg.freetype.SysFont('Helvetica', 25)
 
-    def __init__(self, level, starting_floor, looking_right=True):
+    def __init__(self, level, agent_bullet_group, starting_floor, looking_right=True):
         pg.sprite.Sprite.__init__(self)
         self.level: LevelOne = level
+        self.agent_bullet_group = agent_bullet_group
         self.starting_floor = starting_floor
         self.current_floor = starting_floor
 
@@ -57,6 +61,8 @@ class Agent(pg.sprite.Sprite):
         self.in_room = False
         self.room = None
         self.current_room_unexplored_areas: UnexploredAreasSortedList | None = None
+
+        self.weapon = BasicPistol(agent_bullet_group)
 
     def update(self, dt):
         if self.state == AgentStates.DONE:
@@ -94,8 +100,19 @@ class Agent(pg.sprite.Sprite):
             self.handle_move_up_floor_if_in_stairway(stairway_rects_current_floor)
             self.move_towards_closest_stairway(stairway_rects_current_floor)
 
+        elif self.state == AgentStates.HUNTING_NEO:
+            # if self.is_neo_in_vision():
+            #     self.report_neo_position()
+            # if self.is_neo_in_range():
+            #     self.fire()
+            self.move_towards_last_neo_position()
+
         # print(current_floor_unexplored_areas.sorted_list)
         self.move(dt)
+
+    # def move_towards_last_neo_position(self):
+    #     if self.target_floor != self.current_floor:
+    #         self.
 
     def handle_move_up_floor_if_in_stairway(self, stairway_rects_current_floor):
         # if overlapping with a stairway, stop movement, and move to the target floor
@@ -225,6 +242,19 @@ class Agent(pg.sprite.Sprite):
         health_bar_rect = Rect(self.rect.x - health_bar_width / 2, self.rect.bottom + 10,
                                health_bar_width + self.rect.width, 5)
         pg.draw.rect(screen, colors.agent_hunting, to_pygame_rect(health_bar_rect, WORLD_HEIGHT))
+        if self.weapon.reloading:
+            self.STATUS_FONT.render_to(
+                screen,
+                (self.rect.x - self.STATUS_FONT.get_rect('Reloading').width / 2, self.rect.y + 20),
+                'Reloading',
+                (255, 255, 255)
+            )
+
+    def fire(self, right=True):
+        bullet = Bullet((self.rect.centerx, self.rect.centery), (3000 * (1 if right else -1), 0))
+        self.weapon.fire()
+        self.agent_bullet_group.add(bullet)
+
 
     def set_boundaries(self, new_boundaries):
         self.x_boundaries = new_boundaries

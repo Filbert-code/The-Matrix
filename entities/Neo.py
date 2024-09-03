@@ -3,6 +3,7 @@ from pygame import Rect
 
 import colors
 from constants import SCREEN_WIDTH, WORLD_HEIGHT, WORLD_WIDTH
+from entities.BasicPistol import BasicPistol
 from util.common import to_pygame_rect
 
 
@@ -10,7 +11,7 @@ class Neo:
     SPEED = 1000
     DEFAULT_X_BOUNDARIES = (0, WORLD_WIDTH)
 
-    def __init__(self, level, starting_floor):
+    def __init__(self, level, starting_floor, bullet_group):
         self.level = level
         self.rect = Rect(SCREEN_WIDTH // 2, level.get_y_for_floor(starting_floor), 10, 125)
         self.x = self.rect.x
@@ -19,10 +20,13 @@ class Neo:
         self.dy = 0
 
         self.current_floor = starting_floor
+        self.bullet_group = bullet_group
 
         self.in_room = False
         self.room = None
-        self.health = 100
+        self.health = 10000000
+
+        self.weapon = BasicPistol(bullet_group)
 
         self.x_boundaries = self.DEFAULT_X_BOUNDARIES
 

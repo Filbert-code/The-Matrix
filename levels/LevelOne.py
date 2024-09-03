@@ -42,6 +42,9 @@ class LevelOne:
         self.unexplored_rooms_areas = []
         self.create_unexplored_room_areas()
 
+        # TODO: move this somewhere else
+        self.neo_last_known_position = None
+
     def update(self, agents):
         pass
 

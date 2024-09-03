@@ -16,3 +16,5 @@ class Hud:
 
     def draw(self, screen):
         self.GAME_FONT.render_to(screen, (SCREEN_WIDTH - 155, 10), "FLOOR " + str(self.level.current_player_floor), colors.ui_font_color)
+        ammo_text = 'RELOADING...' if self.neo.weapon.reloading else f"{self.neo.weapon.bullets_remaining} / {self.neo.weapon.MAGAZINE_SIZE}"
+        self.GAME_FONT.render_to(screen, (50, SCREEN_HEIGHT - 100), ammo_text, colors.ui_font_color)
